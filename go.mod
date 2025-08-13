@@ -6,6 +6,7 @@ require (
 	github.com/mdw-go/exec v1.4.0
 	github.com/mdw-go/funcy v1.13.0
 	github.com/mdw-go/must v1.5.0
+	github.com/mdw-go/printing v0.2.0
 	github.com/mdw-go/set/v2 v2.4.0
 	github.com/mdw-go/slogging v1.1.0
 	github.com/mdw-go/testing/v2 v2.0.0
