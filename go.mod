@@ -10,4 +10,5 @@ require (
 	github.com/mdw-go/slogging v1.1.0
 	github.com/mdw-go/testing/v2 v2.0.0
 	github.com/mdw-go/tui/v2 v2.1.1
+	github.com/yuin/goldmark v1.7.13
 )

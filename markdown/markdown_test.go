@@ -1,10 +1,13 @@
 package markdown
 
 import (
+	"bytes"
 	"embed"
+	"errors"
 	"fmt"
 	"io/fs"
 	"iter"
+	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -14,6 +17,7 @@ import (
 	"github.com/mdw-go/testing/v2/assert"
 	"github.com/mdw-go/testing/v2/better"
 	"github.com/mdw-go/testing/v2/should"
+	"github.com/yuin/goldmark"
 )
 
 //go:embed testdata
@@ -32,13 +36,19 @@ func iterateTestsCases(t *testing.T) iter.Seq[string] {
 }
 
 func Test(t *testing.T) {
+	standard := goldmark.New() // TODO: options and extensions
 	for _, testID := range slices.Sorted(iterateTestsCases(t)) {
 		t.Run(testID, func(t *testing.T) {
 			filename := fmt.Sprintf("testdata/%s", testID)
-			expected, err := testFiles.ReadFile(filename + ".html")
-			assert.So(t, err, better.BeNil)
 			input, err := testFiles.ReadFile(filename + ".md")
 			assert.So(t, err, better.BeNil)
+			expected, err := testFiles.ReadFile(filename + ".html")
+			if errors.Is(err, os.ErrNotExist) {
+				var buffer bytes.Buffer
+				_ = standard.Convert(input, &buffer)
+				_ = os.WriteFile(filename+".html", buffer.Bytes(), 0644)
+				expected = buffer.Bytes()
+			}
 			assert.So(t, ConvertToHTML(string(input)), should.Equal, string(expected))
 		})
 	}
