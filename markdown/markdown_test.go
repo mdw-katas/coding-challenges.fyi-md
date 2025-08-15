@@ -37,7 +37,10 @@ func iterateTestsCases(t *testing.T) iter.Seq[string] {
 
 func Test(t *testing.T) {
 	ignore := set.Of[string](
-	//"1000",
+		//"1000",
+	)
+	overrides := set.Of[string](
+		//"1000",
 	)
 	standard := goldmark.New() // TODO: options and extensions
 	for _, testID := range slices.Sorted(iterateTestsCases(t)) {
@@ -49,12 +52,12 @@ func Test(t *testing.T) {
 			input, err := testFiles.ReadFile(filename + ".md")
 			assert.So(t, err, better.BeNil)
 			expected, err := testFiles.ReadFile(filename + ".html")
-			if errors.Is(err, os.ErrNotExist) || testID == "" {
+			if errors.Is(err, os.ErrNotExist) || overrides.Contains(testID) {
 				var buffer bytes.Buffer
 				_ = standard.Convert(input, &buffer)
 				_ = os.WriteFile(filename+".html", buffer.Bytes(), 0644)
 				expected = buffer.Bytes()
-				t.Skip("Establishing expected content.")
+				t.Skip("Overriding expected content.")
 			}
 			assert.So(t, ConvertToHTML(string(input)), should.Equal, string(expected))
 		})
