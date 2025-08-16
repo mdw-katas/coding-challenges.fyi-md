@@ -48,15 +48,18 @@ func (this *Scanner) IsEOF() bool {
 }
 func (this *Scanner) Advance() bool {
 	this.cursor++
-	return this.cursor < len(this.lines)
+	return !this.eof()
+}
+func (this *Scanner) eof() bool {
+	return this.cursor >= len(this.lines)
 }
 
 func parse(md string) (results []Element) {
 	p := makeTag(paragraph)
 	scanner := NewScanner(md)
 	for scanner.Advance() {
-		line, text := scanner.Line(0)
-		atxHeader, ok := parseATXHeader(line, text)
+		text := scanner.LineText(0)
+		atxHeader, ok := parseATXHeader(text)
 		if ok {
 			results = append(results, atxHeader)
 			continue
@@ -76,31 +79,29 @@ func parse(md string) (results []Element) {
 	}
 	return results
 }
-func parseATXHeader(lineNumber int, line string) (Element, bool) {
-	for range 3 {
-		line = strings.TrimPrefix(line, space)
-	}
+func parseATXHeader(line string) (Element, bool) {
+	line = trimMinorLeadingIndent(line)
 	if content, ok := strings.CutPrefix(line, atx1Prefix); ok {
-		return makeATXHeader(lineNumber, h1, content), true
+		return makeATXHeader(h1, content), true
 	}
 	if content, ok := strings.CutPrefix(line, atx2Prefix); ok {
-		return makeATXHeader(lineNumber, h2, content), true
+		return makeATXHeader(h2, content), true
 	}
 	if content, ok := strings.CutPrefix(line, atx3Prefix); ok {
-		return makeATXHeader(lineNumber, h3, content), true
+		return makeATXHeader(h3, content), true
 	}
 	if content, ok := strings.CutPrefix(line, atx4Prefix); ok {
-		return makeATXHeader(lineNumber, h4, content), true
+		return makeATXHeader(h4, content), true
 	}
 	if content, ok := strings.CutPrefix(line, atx5Prefix); ok {
-		return makeATXHeader(lineNumber, h5, content), true
+		return makeATXHeader(h5, content), true
 	}
 	if content, ok := strings.CutPrefix(line, atx6Prefix); ok {
-		return makeATXHeader(lineNumber, h6, content), true
+		return makeATXHeader(h6, content), true
 	}
 	return Element{}, false
 }
-func makeATXHeader(n int, tag, line string) Element {
+func makeATXHeader(tag, line string) Element {
 	line, _, _ = strings.Cut(line, atxSuffix)
 	result := makeTag(tag)
 	result.InnerLines = append(result.InnerLines, strings.TrimSpace(line))
@@ -111,6 +112,12 @@ func makeTag(name string) Element {
 		OpeningTag: fmt.Sprintf(openingTagTemplate, name),
 		ClosingTag: fmt.Sprintf(closingTagTemplate, name),
 	}
+}
+func trimMinorLeadingIndent(line string) string {
+	for range 3 {
+		line = strings.TrimPrefix(line, space)
+	}
+	return line
 }
 
 const (
