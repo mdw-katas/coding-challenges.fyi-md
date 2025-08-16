@@ -11,7 +11,8 @@ func ConvertToHTML(md string) string {
 	result := printing.NewBuilder()
 	for _, element := range parse(md) {
 		result.Print(element.OpeningTag)
-		result.Print(element.InnerContent)
+		result.Print(strings.Join(element.InnerLines, "\n"))
+		// TODO: or recurse into InnerElements
 		result.Print(element.ClosingTag)
 		result.Println()
 	}
@@ -19,19 +20,59 @@ func ConvertToHTML(md string) string {
 }
 
 type Element struct {
-	Line          int
 	OpeningTag    string
-	InnerContent  string
+	InnerLines    []string
 	InnerElements []Element
 	ClosingTag    string
 }
 
+type Scanner struct {
+	lines  []string
+	cursor int
+}
+
+func NewScanner(text string) *Scanner {
+	return &Scanner{lines: strings.Split(text, "\n"), cursor: -1}
+}
+func (this *Scanner) LineNumber() int {
+	return this.cursor + 1
+}
+func (this *Scanner) LineText(offset int) string {
+	return this.lines[this.cursor+offset]
+}
+func (this *Scanner) Line(offset int) (int, string) {
+	return this.LineNumber() + offset, this.LineText(offset)
+}
+func (this *Scanner) IsEOF() bool {
+	return this.cursor >= len(this.lines)
+}
+func (this *Scanner) Advance() bool {
+	this.cursor++
+	return this.cursor < len(this.lines)
+}
+
 func parse(md string) (results []Element) {
-	for l, line := range strings.Split(md, "\n") {
-		header, ok := parseATXHeader(l, line)
+	p := makeTag(paragraph)
+	scanner := NewScanner(md)
+	for scanner.Advance() {
+		line, text := scanner.Line(0)
+		atxHeader, ok := parseATXHeader(line, text)
 		if ok {
-			results = append(results, header)
+			results = append(results, atxHeader)
+			continue
 		}
+
+		if text != "" {
+			p.InnerLines = append(p.InnerLines, text)
+		} else {
+			if len(p.InnerLines) > 0 {
+				results = append(results, p)
+			}
+			p = makeTag(paragraph)
+		}
+	}
+	if len(p.InnerLines) > 0 {
+		results = append(results, p)
 	}
 	return results
 }
@@ -40,32 +81,35 @@ func parseATXHeader(lineNumber int, line string) (Element, bool) {
 		line = strings.TrimPrefix(line, space)
 	}
 	if content, ok := strings.CutPrefix(line, atx1Prefix); ok {
-		return atxHeader(lineNumber, h1, content), true
+		return makeATXHeader(lineNumber, h1, content), true
 	}
 	if content, ok := strings.CutPrefix(line, atx2Prefix); ok {
-		return atxHeader(lineNumber, h2, content), true
+		return makeATXHeader(lineNumber, h2, content), true
 	}
 	if content, ok := strings.CutPrefix(line, atx3Prefix); ok {
-		return atxHeader(lineNumber, h3, content), true
+		return makeATXHeader(lineNumber, h3, content), true
 	}
 	if content, ok := strings.CutPrefix(line, atx4Prefix); ok {
-		return atxHeader(lineNumber, h4, content), true
+		return makeATXHeader(lineNumber, h4, content), true
 	}
 	if content, ok := strings.CutPrefix(line, atx5Prefix); ok {
-		return atxHeader(lineNumber, h5, content), true
+		return makeATXHeader(lineNumber, h5, content), true
 	}
 	if content, ok := strings.CutPrefix(line, atx6Prefix); ok {
-		return atxHeader(lineNumber, h6, content), true
+		return makeATXHeader(lineNumber, h6, content), true
 	}
 	return Element{}, false
 }
-func atxHeader(n int, tag, line string) Element {
+func makeATXHeader(n int, tag, line string) Element {
 	line, _, _ = strings.Cut(line, atxSuffix)
+	result := makeTag(tag)
+	result.InnerLines = append(result.InnerLines, strings.TrimSpace(line))
+	return result
+}
+func makeTag(name string) Element {
 	return Element{
-		Line:         n + 1,
-		OpeningTag:   fmt.Sprintf(openingTagTemplate, tag),
-		InnerContent: strings.TrimSpace(line),
-		ClosingTag:   fmt.Sprintf(closingTagTemplate, tag),
+		OpeningTag: fmt.Sprintf(openingTagTemplate, name),
+		ClosingTag: fmt.Sprintf(closingTagTemplate, name),
 	}
 }
 
@@ -89,4 +133,6 @@ const (
 	atx5Prefix = "##### "
 	atx6Prefix = "###### "
 	atxSuffix  = " #"
+
+	paragraph = "p"
 )

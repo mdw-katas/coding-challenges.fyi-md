@@ -37,22 +37,29 @@ func iterateTestsCases(t *testing.T) iter.Seq[string] {
 
 func Test(t *testing.T) {
 	ignore := set.Of[string](
-	//"1000",
+		"1001",
 	)
 	overrides := set.Of[string](
-	//"1000",
+		// "1002",
+	)
+	focus := set.Of[string](
+		// "1002",
 	)
 	standard := goldmark.New() // TODO: options and extensions
 	for _, testID := range slices.Sorted(iterateTestsCases(t)) {
+		numericPrefix := strings.Split(testID, "-")[0]
+		if focus.Len() > 0 && !focus.Contains(numericPrefix) {
+			continue
+		}
 		t.Run(testID, func(t *testing.T) {
-			if ignore.Contains(testID) {
-				t.Skip()
+			if ignore.Contains(testID) || ignore.Contains(numericPrefix) {
+				t.Skip("Skipping test in 'ignore' list.")
 			}
 			filename := fmt.Sprintf("testdata/%s", testID)
 			input, err := testFiles.ReadFile(filename + ".md")
 			assert.So(t, err, better.BeNil)
 			expected, err := testFiles.ReadFile(filename + ".html")
-			if errors.Is(err, os.ErrNotExist) || overrides.Contains(testID) {
+			if errors.Is(err, os.ErrNotExist) || overrides.Contains(testID) || overrides.Contains(numericPrefix) {
 				var buffer bytes.Buffer
 				_ = standard.Convert(input, &buffer)
 				_ = os.WriteFile(filename+".html", buffer.Bytes(), 0644)
