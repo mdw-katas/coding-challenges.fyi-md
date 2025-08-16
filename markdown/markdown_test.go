@@ -37,10 +37,10 @@ func iterateTestsCases(t *testing.T) iter.Seq[string] {
 
 func Test(t *testing.T) {
 	ignore := set.Of[string](
-		//"1000",
+	//"1000",
 	)
 	overrides := set.Of[string](
-		//"1000",
+	//"1000",
 	)
 	standard := goldmark.New() // TODO: options and extensions
 	for _, testID := range slices.Sorted(iterateTestsCases(t)) {
