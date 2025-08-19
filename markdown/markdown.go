@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/mdw-go/printing"
+	"github.com/mdw-katas/coding-challenges.fyi-md/util/str"
 )
 
 func ConvertToHTML(md string) string {
@@ -79,24 +80,8 @@ func parse(md string) (results []Element) {
 	return results
 }
 
-func parseSetextHeader(text string, precedingLines []string) (Element, bool) {
-	if isOnly(text, '=') {
-		return makeSetextHeader(h1, precedingLines), true
-	}
-	if isOnly(text, '-') {
-		return makeSetextHeader(h2, precedingLines), true
-	}
-	return Element{}, false
-}
-
-func isOnly(text string, char rune) bool {
-	text = trimMinorLeadingIndent(text)
-	text = strings.TrimRight(text, space)
-	count := strings.Count(text, string(char))
-	return count > 0 && count == len(text)
-}
 func parseATXHeader(line string) (Element, bool) {
-	line = trimMinorLeadingIndent(line)
+	line = str.TrimMinorLeadingIndent(line)
 	for _, attempt := range atxAttempts {
 		prefix, tag := attempt[0], attempt[1]
 		if content, ok := strings.CutPrefix(line, prefix); ok {
@@ -111,26 +96,32 @@ func makeATXHeader(tag, line string) Element {
 	result.InnerLines = append(result.InnerLines, strings.TrimSpace(line))
 	return result
 }
+
+func parseSetextHeader(text string, precedingLines []string) (Element, bool) {
+	if str.IsOnly(text, equal) {
+		return makeSetextHeader(h1, precedingLines), true
+	}
+	if str.IsOnly(text, dash) {
+		return makeSetextHeader(h2, precedingLines), true
+	}
+	return Element{}, false
+}
 func makeSetextHeader(tag string, lines []string) Element {
 	result := makeTag(tag)
 	result.InnerLines = lines
 	return result
 }
+
 func makeTag(name string) Element {
 	return Element{
 		OpeningTag: fmt.Sprintf(openingTagTemplate, name),
 		ClosingTag: fmt.Sprintf(closingTagTemplate, name),
 	}
 }
-func trimMinorLeadingIndent(line string) string {
-	for range 3 {
-		line = strings.TrimPrefix(line, space)
-	}
-	return line
-}
 
 const (
-	space = " "
+	dash  = '-'
+	equal = '='
 
 	openingTagTemplate = "<%s>"
 	closingTagTemplate = "</%s>"
