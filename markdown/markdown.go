@@ -34,24 +34,15 @@ type Scanner struct {
 func NewScanner(text string) *Scanner {
 	return &Scanner{lines: strings.Split(text, "\n"), cursor: -1}
 }
-func (this *Scanner) LineNumber() int {
-	return this.cursor + 1
-}
 func (this *Scanner) LineText(offset int) string {
 	return this.lines[this.cursor+offset]
-}
-func (this *Scanner) Line(offset int) (int, string) {
-	return this.LineNumber() + offset, this.LineText(offset)
 }
 func (this *Scanner) IsEOF() bool {
 	return this.cursor >= len(this.lines)
 }
 func (this *Scanner) Advance() bool {
 	this.cursor++
-	return !this.eof()
-}
-func (this *Scanner) eof() bool {
-	return this.cursor >= len(this.lines)
+	return !this.IsEOF()
 }
 
 func parse(md string) (results []Element) {
