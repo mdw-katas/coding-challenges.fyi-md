@@ -50,9 +50,17 @@ func parse(md string) (results []Element) {
 	scanner := NewScanner(md)
 	for scanner.Advance() {
 		text := scanner.LineText(0)
+
 		atxHeader, ok := parseATXHeader(text)
 		if ok {
 			results = append(results, atxHeader)
+			continue
+		}
+
+		setextHeader, ok := parseSetextHeader(text, p.InnerLines)
+		if ok {
+			results = append(results, setextHeader)
+			p = makeTag(paragraph)
 			continue
 		}
 
@@ -70,6 +78,23 @@ func parse(md string) (results []Element) {
 	}
 	return results
 }
+
+func parseSetextHeader(text string, precedingLines []string) (Element, bool) {
+	if isOnly(text, '=') {
+		return makeSetextHeader(h1, precedingLines), true
+	}
+	if isOnly(text, '-') {
+		return makeSetextHeader(h2, precedingLines), true
+	}
+	return Element{}, false
+}
+
+func isOnly(text string, char rune) bool {
+	text = trimMinorLeadingIndent(text)
+	text = strings.TrimRight(text, space)
+	count := strings.Count(text, string(char))
+	return count > 0 && count == len(text)
+}
 func parseATXHeader(line string) (Element, bool) {
 	line = trimMinorLeadingIndent(line)
 	for _, attempt := range atxAttempts {
@@ -84,6 +109,11 @@ func makeATXHeader(tag, line string) Element {
 	line, _, _ = strings.Cut(line, atxSuffix)
 	result := makeTag(tag)
 	result.InnerLines = append(result.InnerLines, strings.TrimSpace(line))
+	return result
+}
+func makeSetextHeader(tag string, lines []string) Element {
+	result := makeTag(tag)
+	result.InnerLines = lines
 	return result
 }
 func makeTag(name string) Element {
