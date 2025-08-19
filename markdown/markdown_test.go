@@ -13,7 +13,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mdw-go/set/v2/set"
+	"github.com/mdw-go/set"
 	"github.com/mdw-go/testing/v2/assert"
 	"github.com/mdw-go/testing/v2/better"
 	"github.com/mdw-go/testing/v2/should"
