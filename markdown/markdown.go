@@ -81,23 +81,11 @@ func parse(md string) (results []Element) {
 }
 func parseATXHeader(line string) (Element, bool) {
 	line = trimMinorLeadingIndent(line)
-	if content, ok := strings.CutPrefix(line, atx1Prefix); ok {
-		return makeATXHeader(h1, content), true
-	}
-	if content, ok := strings.CutPrefix(line, atx2Prefix); ok {
-		return makeATXHeader(h2, content), true
-	}
-	if content, ok := strings.CutPrefix(line, atx3Prefix); ok {
-		return makeATXHeader(h3, content), true
-	}
-	if content, ok := strings.CutPrefix(line, atx4Prefix); ok {
-		return makeATXHeader(h4, content), true
-	}
-	if content, ok := strings.CutPrefix(line, atx5Prefix); ok {
-		return makeATXHeader(h5, content), true
-	}
-	if content, ok := strings.CutPrefix(line, atx6Prefix); ok {
-		return makeATXHeader(h6, content), true
+	for _, attempt := range atxAttempts {
+		prefix, tag := attempt[0], attempt[1]
+		if content, ok := strings.CutPrefix(line, prefix); ok {
+			return makeATXHeader(tag, content), true
+		}
 	}
 	return Element{}, false
 }
@@ -143,3 +131,12 @@ const (
 
 	paragraph = "p"
 )
+
+var atxAttempts = [][]string{
+	{atx1Prefix, h1},
+	{atx2Prefix, h2},
+	{atx3Prefix, h3},
+	{atx4Prefix, h4},
+	{atx5Prefix, h5},
+	{atx6Prefix, h6},
+}
