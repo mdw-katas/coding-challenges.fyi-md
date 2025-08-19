@@ -98,10 +98,10 @@ func makeATXHeader(tag, line string) Element {
 }
 
 func parseSetextHeader(text string, precedingLines []string) (Element, bool) {
-	if str.IsOnly(text, equal) {
+	if str.IsOnly(text, setext2underline) {
 		return makeSetextHeader(h1, precedingLines), true
 	}
-	if str.IsOnly(text, dash) {
+	if str.IsOnly(text, setext1underline) {
 		return makeSetextHeader(h2, precedingLines), true
 	}
 	return Element{}, false
@@ -120,9 +120,6 @@ func makeTag(name string) Element {
 }
 
 const (
-	dash  = '-'
-	equal = '='
-
 	openingTagTemplate = "<%s>"
 	closingTagTemplate = "</%s>"
 
@@ -140,6 +137,9 @@ const (
 	atx5Prefix = "##### "
 	atx6Prefix = "###### "
 	atxSuffix  = " #"
+
+	setext1underline = '-'
+	setext2underline = '='
 
 	paragraph = "p"
 )
