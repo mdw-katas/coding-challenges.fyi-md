@@ -65,6 +65,12 @@ func parse(md string) (results []Element) {
 			continue
 		}
 
+		thematicBreak, ok := parseThematicBreak(text)
+		if ok {
+			results = append(results, thematicBreak)
+			continue
+		}
+
 		if text != "" {
 			p.InnerLines = append(p.InnerLines, text)
 		} else {
@@ -98,10 +104,10 @@ func makeATXHeader(tag, line string) Element {
 }
 
 func parseSetextHeader(text string, precedingLines []string) (Element, bool) {
-	if str.IsOnly(text, setext2underline) {
+	if str.IsOnly(text, setext2underline) && len(precedingLines) > 0 {
 		return makeSetextHeader(h1, precedingLines), true
 	}
-	if str.IsOnly(text, setext1underline) {
+	if str.IsOnly(text, setext1underline) && len(precedingLines) > 0 {
 		return makeSetextHeader(h2, precedingLines), true
 	}
 	return Element{}, false
@@ -112,6 +118,20 @@ func makeSetextHeader(tag string, lines []string) Element {
 	return result
 }
 
+func parseThematicBreak(text string) (Element, bool) {
+	text = str.TrimMinorLeadingIndent(text)
+	text = strings.ReplaceAll(text, " ", "")
+	if str.IsOnly(text, '-') && strings.Count(text, "-") >= 3 {
+		return Element{OpeningTag: fmt.Sprintf(openingTagTemplate, hr)}, true
+	}
+	if str.IsOnly(text, '_') && strings.Count(text, "_") >= 3 {
+		return Element{OpeningTag: fmt.Sprintf(openingTagTemplate, hr)}, true
+	}
+	if str.IsOnly(text, '*') && strings.Count(text, "*") >= 3 {
+		return Element{OpeningTag: fmt.Sprintf(openingTagTemplate, hr)}, true
+	}
+	return Element{}, false
+}
 func makeTag(name string) Element {
 	return Element{
 		OpeningTag: fmt.Sprintf(openingTagTemplate, name),
@@ -142,6 +162,8 @@ const (
 	setext2underline = '='
 
 	paragraph = "p"
+
+	hr = "hr"
 )
 
 var atxAttempts = [][]string{
