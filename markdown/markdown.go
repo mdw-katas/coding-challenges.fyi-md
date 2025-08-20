@@ -121,17 +121,14 @@ func makeSetextHeader(tag string, lines []string) Element {
 func parseThematicBreak(text string) (Element, bool) {
 	text = str.TrimMinorLeadingIndent(text)
 	text = strings.ReplaceAll(text, " ", "")
-	if str.IsOnly(text, '-') && strings.Count(text, "-") >= 3 {
-		return Element{OpeningTag: fmt.Sprintf(openingTagTemplate, hr)}, true
-	}
-	if str.IsOnly(text, '_') && strings.Count(text, "_") >= 3 {
-		return Element{OpeningTag: fmt.Sprintf(openingTagTemplate, hr)}, true
-	}
-	if str.IsOnly(text, '*') && strings.Count(text, "*") >= 3 {
-		return Element{OpeningTag: fmt.Sprintf(openingTagTemplate, hr)}, true
+	for _, attempt := range thematicBreakAttempts {
+		if str.IsOnly(text, attempt) && strings.Count(text, string(attempt)) >= 3 {
+			return Element{OpeningTag: fmt.Sprintf(openingTagTemplate, hr)}, true
+		}
 	}
 	return Element{}, false
 }
+
 func makeTag(name string) Element {
 	return Element{
 		OpeningTag: fmt.Sprintf(openingTagTemplate, name),
@@ -166,11 +163,18 @@ const (
 	hr = "hr"
 )
 
-var atxAttempts = [][]string{
-	{atx1Prefix, h1},
-	{atx2Prefix, h2},
-	{atx3Prefix, h3},
-	{atx4Prefix, h4},
-	{atx5Prefix, h5},
-	{atx6Prefix, h6},
-}
+var (
+	atxAttempts = [][]string{
+		{atx1Prefix, h1},
+		{atx2Prefix, h2},
+		{atx3Prefix, h3},
+		{atx4Prefix, h4},
+		{atx5Prefix, h5},
+		{atx6Prefix, h6},
+	}
+	thematicBreakAttempts = []rune{
+		'-',
+		'=',
+		'*',
+	}
+)
