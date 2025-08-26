@@ -1,6 +1,8 @@
 package markdown2
 
 import (
+	"bytes"
+	"os"
 	"strings"
 	"testing"
 
@@ -9,16 +11,22 @@ import (
 )
 
 func Test(t *testing.T) {
+	input, err := os.ReadFile("testdata/input.md")
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser := NewPhase1Parser()
-	for line := range str.IterateLines(strings.NewReader(input)) {
+	for line := range str.IterateLines(bytes.NewReader(input)) {
 		parser.Feed(line)
 	}
 	parser.Finalize()
 	parser.root.Render(printing.NewPrinter(t.Output()), 0)
 }
 
-const input = `# Main Heading
-> Lorem ipsum dolor
-sit amet.
-> - Qui *quodsi iracundia*
-> - aliquando id`
+func (this *Node) Render(printer printing.Printer, level int) {
+	printer.Print(strings.Repeat("  ", level))
+	printer.Println(this.Token.String(), strings.ReplaceAll(this.Text, "\n", "\\n"))
+	for child := range this.Children.All() {
+		child.Render(printer, level+1)
+	}
+}

@@ -18,5 +18,6 @@ func (this *Phase1Parser) Feed(line string) {
 }
 
 func (this *Phase1Parser) Finalize() {
+	// TODO: further parsing of container nodes (block quotes, lists)
 	// TODO: close all open nodes
 }
