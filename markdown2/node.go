@@ -34,21 +34,6 @@ func (this *Node) AddChild(child *Node) *Node {
 	this.Children.Add(child)
 	return child
 }
-func (this *Node) LocateOpenLeaf() *Node {
-	if this.Children.Len() == 0 && !this.Closed {
-		return this
-	}
-	if !this.Closed && this.Children.Len() > 0 {
-		for child := range this.Children.All() {
-			n := child.LocateOpenLeaf()
-			if n != nil {
-				return n
-			}
-
-		}
-	}
-	return nil
-}
 
 type Scanner func(line string, node *Node) *Node
 
