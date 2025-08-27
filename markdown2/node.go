@@ -15,11 +15,18 @@ type Node struct {
 	Parent   *Node
 	Children *list.List[*Node]
 
-	FencedMeta FencedCodeBlockMeta
-}
-type FencedCodeBlockMeta struct {
-	Info    string
-	Started bool
+	FencedMeta struct {
+		Info    string
+		Started bool
+	}
+	OrderedMeta struct {
+		StartingNumber int
+		Loose          bool
+	}
+	UnorderedMeta struct {
+		Bullet rune
+		Loose  bool
+	}
 }
 
 func NewNode(token Token, scanner Scanner) *Node {
@@ -69,6 +76,10 @@ func ScanBlocks(line string, node *Node) *Node {
 		quote := node.AddChild(NewNode(TokenBlockQuote, ScanBlockQuote))
 		return quote.Scanner(line, quote)
 	}
+	if strings.HasPrefix(line, "- ") {
+		unordered := node.AddChild(NewNode(TokenUnorderedList, ScanUnorderedList("", '-')))
+		return unordered.Scanner(line, unordered)
+	}
 	if strings.HasPrefix(line, "```") {
 		codeBlock := node.AddChild(NewNode(TokenPreCode, ScanFencedCodeBlock))
 		return codeBlock.Scanner(line, codeBlock)
@@ -79,6 +90,31 @@ func ScanBlocks(line string, node *Node) *Node {
 	}
 	paragraph := node.AddChild(NewNode(TokenParagraph, ScanParagraph))
 	return paragraph.Scanner(line, paragraph)
+}
+
+func ScanUnorderedList(indent string, bullet rune) Scanner {
+	return func(line string, node *Node) *Node {
+		prefix, _, _ := str.CutIndent(line)
+		if len(prefix) > len(indent) {
+			sublist := node.AddChild(NewNode(TokenUnorderedList, ScanUnorderedList(prefix, bullet)))
+			return sublist.Scanner(line, sublist)
+		}
+		if !strings.HasPrefix(line, indent+string(bullet)+" ") {
+			// TODO: we are losing the first item of new lists that come right after the last item in the current list
+			return node.Parent
+		}
+		item := node.AddChild(NewNode(TokenListItem, ScanDashedListItem(indent, bullet)))
+		item.UnorderedMeta.Bullet = bullet
+		item.Scanner(line, item)
+		return node
+	}
+}
+
+func ScanDashedListItem(indent string, bullet rune) Scanner {
+	return func(line string, node *Node) *Node {
+		node.Text = strings.TrimPrefix(line, indent+string(bullet)+" ")
+		return node.Parent
+	}
 }
 func ScanH1(line string, node *Node) *Node {
 	node.Text, _ = strings.CutPrefix(line, "# ")
@@ -104,10 +140,6 @@ func ScanH6(line string, node *Node) *Node {
 	node.Text, _ = strings.CutPrefix(line, "###### ")
 	return node.Parent
 }
-func ScanThematicBreak(line string, node *Node) *Node {
-	node.Closed = true
-	return node.Parent
-}
 func ScanBlockQuote(line string, node *Node) *Node {
 	if len(line) == 0 {
 		return node.Parent
@@ -119,6 +151,7 @@ func ScanBlockQuote(line string, node *Node) *Node {
 	node.Text += content
 	return node
 }
+
 func ScanFencedCodeBlock(line string, node *Node) *Node {
 	if !node.FencedMeta.Started {
 		info, ok := strings.CutPrefix(line, "```")
@@ -134,6 +167,10 @@ func ScanFencedCodeBlock(line string, node *Node) *Node {
 	}
 	node.Text += line + "\n"
 	return node
+}
+func ScanThematicBreak(line string, node *Node) *Node {
+	node.Closed = true
+	return node.Parent
 }
 func ScanParagraph(line string, node *Node) *Node {
 	if len(line) == 0 {
