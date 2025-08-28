@@ -1,6 +1,7 @@
 package markdown
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/mdw-katas/coding-challenges.fyi-md/util/list"
@@ -19,13 +20,10 @@ type Node struct {
 		Info    string
 		Started bool
 	}
-	OrderedMeta struct {
-		StartingNumber int
-		Loose          bool
-	}
-	UnorderedMeta struct {
-		Bullet rune
-		Loose  bool
+	ListMeta struct {
+		Bullet string
+		Start  int
+		Index  int
 	}
 }
 
@@ -76,9 +74,10 @@ func ScanBlocks(line string, node *Node) *Node {
 		quote := node.AddChild(NewNode(TokenBlockQuote, ScanBlockQuote))
 		return quote.Scanner(line, quote)
 	}
-	if strings.HasPrefix(line, "- ") {
-		unordered := node.AddChild(NewNode(TokenUnorderedList, ScanUnorderedList("", '-')))
-		return unordered.Scanner(line, unordered)
+	if meta := parseListMeta(line); meta.Bullet != "" && meta.Indent == "" {
+		list_ := node.AddChild(NewNode(meta.Token, ScanList(meta)))
+		list_.ListMeta.Bullet = meta.Bullet
+		return list_.Scanner(line, list_)
 	}
 	if strings.HasPrefix(line, "```") {
 		codeBlock := node.AddChild(NewNode(TokenPreCode, ScanFencedCodeBlock))
@@ -127,26 +126,35 @@ func ScanBlockQuote(line string, node *Node) *Node {
 	node.Text += content
 	return node
 }
-func ScanUnorderedList(indent string, bullet rune) Scanner {
+func ScanList(meta ListMeta) Scanner {
 	return func(line string, node *Node) *Node {
-		prefix, _, _ := str.CutIndent(line)
-		if len(prefix) > len(indent) {
-			sublist := node.AddChild(NewNode(TokenUnorderedList, ScanUnorderedList(prefix, bullet)))
-			return sublist.Scanner(line, sublist)
-		}
-		if !strings.HasPrefix(line, indent+string(bullet)+" ") {
-			// TODO: we are losing the first item of new lists that come right after the last item in the current list
+		meta2 := parseListMeta(line)
+		if meta2.Token == TokenNone {
 			return node.Parent
 		}
-		item := node.AddChild(NewNode(TokenListItem, ScanDashedListItem(indent, bullet)))
-		item.UnorderedMeta.Bullet = bullet
+		if len(meta2.Indent) > len(meta.Indent) {
+			sublist := node.AddChild(NewNode(meta2.Token, ScanList(meta2)))
+			return sublist.Scanner(line, sublist)
+		}
+		if len(meta2.Indent) < len(meta.Indent) {
+			node = node.Parent
+			meta.Indent = meta2.Indent
+		}
+		if meta2.Token != meta.Token {
+			newList := node.Parent.AddChild(NewNode(meta2.Token, ScanList(meta2)))
+			newList.ListMeta.Bullet = meta.Bullet
+			item := newList.AddChild(NewNode(TokenListItem, ScanListItem(meta2.Indent, meta2.Bullet)))
+			return item.Scanner(line, item)
+		}
+		item := node.AddChild(NewNode(TokenListItem, ScanListItem(meta.Indent, meta.Bullet)))
+		item.ListMeta.Bullet = meta.Bullet
 		item.Scanner(line, item)
 		return node
 	}
 }
-func ScanDashedListItem(indent string, bullet rune) Scanner {
+func ScanListItem(indent, bullet string) Scanner {
 	return func(line string, node *Node) *Node {
-		node.Text = strings.TrimPrefix(line, indent+string(bullet)+" ")
+		node.Text = strings.TrimPrefix(line, indent+bullet)
 		return node.Parent
 	}
 }
@@ -179,4 +187,35 @@ func ScanParagraph(line string, node *Node) *Node {
 	}
 	node.Text += line
 	return node
+}
+
+type ListMeta struct {
+	Indent string
+	Bullet string
+	Start  int
+	Token  Token
+}
+
+func parseListMeta(line string) (result ListMeta) {
+	result.Indent, line, _ = str.CutIndent(line)
+	if strings.HasPrefix(line, "- ") {
+		result.Bullet = "- "
+		result.Token = TokenUnorderedList
+		return result
+	}
+	beforeDot, _, ok := strings.Cut(line, ".")
+	if !ok {
+		return ListMeta{}
+	}
+	n, err := strconv.Atoi(beforeDot)
+	if err != nil {
+		return ListMeta{}
+	}
+	if n < 1 {
+		return ListMeta{}
+	}
+	result.Start = n
+	result.Bullet = ". "
+	result.Token = TokenOrderedList
+	return result
 }

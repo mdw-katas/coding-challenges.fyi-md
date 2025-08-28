@@ -3,7 +3,8 @@ package markdown
 type Token int
 
 const (
-	TokenDocument Token = iota
+	TokenNone Token = iota
+	TokenDocument
 	TokenH1
 	TokenH2
 	TokenH3
