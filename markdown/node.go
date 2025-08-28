@@ -47,27 +47,27 @@ func ScanBlocks(line string, node *Node) *Node {
 		return node
 	}
 	if strings.HasPrefix(line, "# ") {
-		heading := node.AddChild(NewNode(TokenH1, ScanH1))
+		heading := node.AddChild(NewNode(TokenHeader1, ScanH1))
 		return heading.Scanner(line, heading)
 	}
 	if strings.HasPrefix(line, "## ") {
-		heading := node.AddChild(NewNode(TokenH2, ScanH2))
+		heading := node.AddChild(NewNode(TokenHeader2, ScanH2))
 		return heading.Scanner(line, heading)
 	}
 	if strings.HasPrefix(line, "### ") {
-		heading := node.AddChild(NewNode(TokenH2, ScanH3))
+		heading := node.AddChild(NewNode(TokenHeader2, ScanH3))
 		return heading.Scanner(line, heading)
 	}
 	if strings.HasPrefix(line, "#### ") {
-		heading := node.AddChild(NewNode(TokenH2, ScanH4))
+		heading := node.AddChild(NewNode(TokenHeader2, ScanH4))
 		return heading.Scanner(line, heading)
 	}
 	if strings.HasPrefix(line, "##### ") {
-		heading := node.AddChild(NewNode(TokenH2, ScanH5))
+		heading := node.AddChild(NewNode(TokenHeader2, ScanH5))
 		return heading.Scanner(line, heading)
 	}
 	if strings.HasPrefix(line, "###### ") {
-		heading := node.AddChild(NewNode(TokenH2, ScanH6))
+		heading := node.AddChild(NewNode(TokenHeader2, ScanH6))
 		return heading.Scanner(line, heading)
 	}
 	if strings.HasPrefix(line, "> ") {
@@ -84,7 +84,7 @@ func ScanBlocks(line string, node *Node) *Node {
 		return codeBlock.Scanner(line, codeBlock)
 	}
 	if str.IsOnly(line, '-') && strings.Count(line, "-") >= 3 {
-		thematicBreak := node.AddChild(NewNode(TokenHR, ScanThematicBreak))
+		thematicBreak := node.AddChild(NewNode(TokenThematicBreak, ScanThematicBreak))
 		return thematicBreak.Scanner(line, thematicBreak)
 	}
 	paragraph := node.AddChild(NewNode(TokenParagraph, ScanParagraph))

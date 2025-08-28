@@ -5,13 +5,13 @@ type Token int
 const (
 	TokenNone Token = iota
 	TokenDocument
-	TokenH1
-	TokenH2
-	TokenH3
-	TokenH4
-	TokenH5
-	TokenH6
-	TokenHR
+	TokenHeader1
+	TokenHeader2
+	TokenHeader3
+	TokenHeader4
+	TokenHeader5
+	TokenHeader6
+	TokenThematicBreak
 	TokenOrderedList
 	TokenUnorderedList
 	TokenListItem
@@ -29,19 +29,19 @@ func (t Token) String() string {
 	switch t {
 	case TokenDocument:
 		return "Document"
-	case TokenH1:
+	case TokenHeader1:
 		return "H1"
-	case TokenH2:
+	case TokenHeader2:
 		return "H2"
-	case TokenH3:
+	case TokenHeader3:
 		return "H3"
-	case TokenH4:
+	case TokenHeader4:
 		return "H4"
-	case TokenH5:
+	case TokenHeader5:
 		return "H5"
-	case TokenH6:
+	case TokenHeader6:
 		return "H6"
-	case TokenHR:
+	case TokenThematicBreak:
 		return "HR"
 	case TokenOrderedList:
 		return "OrderedList"
