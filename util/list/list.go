@@ -17,9 +17,6 @@ func (this *List[T]) Add(values ...T) {
 	this.slice = append(this.slice, values...)
 }
 func (this *List[T]) Len() int {
-	if this == nil {
-		return 0
-	}
 	return len(this.slice)
 }
 func (this *List[T]) Clear() {
