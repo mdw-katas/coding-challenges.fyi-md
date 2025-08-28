@@ -124,6 +124,7 @@ func ScanBlockQuote(line string, node *Node) *Node {
 		node.Text += "\n"
 	}
 	node.Text += content
+	// TODO: scan text for other containers (nested blockquotes, lists, etc.)
 	return node
 }
 func ScanList(meta ListMeta) Scanner {
@@ -154,7 +155,7 @@ func ScanList(meta ListMeta) Scanner {
 }
 func ScanListItem(indent, bullet string) Scanner {
 	return func(line string, node *Node) *Node {
-		node.Text = strings.TrimPrefix(line, indent+bullet)
+		node.Text = strings.TrimPrefix(line, indent+bullet) // Trim prefix (including numeric prefixes)
 		return node.Parent
 	}
 }
