@@ -1,4 +1,4 @@
-package markdown2
+package markdown
 
 type Token int
 
