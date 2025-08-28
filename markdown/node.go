@@ -92,30 +92,6 @@ func ScanBlocks(line string, node *Node) *Node {
 	return paragraph.Scanner(line, paragraph)
 }
 
-func ScanUnorderedList(indent string, bullet rune) Scanner {
-	return func(line string, node *Node) *Node {
-		prefix, _, _ := str.CutIndent(line)
-		if len(prefix) > len(indent) {
-			sublist := node.AddChild(NewNode(TokenUnorderedList, ScanUnorderedList(prefix, bullet)))
-			return sublist.Scanner(line, sublist)
-		}
-		if !strings.HasPrefix(line, indent+string(bullet)+" ") {
-			// TODO: we are losing the first item of new lists that come right after the last item in the current list
-			return node.Parent
-		}
-		item := node.AddChild(NewNode(TokenListItem, ScanDashedListItem(indent, bullet)))
-		item.UnorderedMeta.Bullet = bullet
-		item.Scanner(line, item)
-		return node
-	}
-}
-
-func ScanDashedListItem(indent string, bullet rune) Scanner {
-	return func(line string, node *Node) *Node {
-		node.Text = strings.TrimPrefix(line, indent+string(bullet)+" ")
-		return node.Parent
-	}
-}
 func ScanH1(line string, node *Node) *Node {
 	node.Text, _ = strings.CutPrefix(line, "# ")
 	return node.Parent
@@ -151,7 +127,29 @@ func ScanBlockQuote(line string, node *Node) *Node {
 	node.Text += content
 	return node
 }
-
+func ScanUnorderedList(indent string, bullet rune) Scanner {
+	return func(line string, node *Node) *Node {
+		prefix, _, _ := str.CutIndent(line)
+		if len(prefix) > len(indent) {
+			sublist := node.AddChild(NewNode(TokenUnorderedList, ScanUnorderedList(prefix, bullet)))
+			return sublist.Scanner(line, sublist)
+		}
+		if !strings.HasPrefix(line, indent+string(bullet)+" ") {
+			// TODO: we are losing the first item of new lists that come right after the last item in the current list
+			return node.Parent
+		}
+		item := node.AddChild(NewNode(TokenListItem, ScanDashedListItem(indent, bullet)))
+		item.UnorderedMeta.Bullet = bullet
+		item.Scanner(line, item)
+		return node
+	}
+}
+func ScanDashedListItem(indent string, bullet rune) Scanner {
+	return func(line string, node *Node) *Node {
+		node.Text = strings.TrimPrefix(line, indent+string(bullet)+" ")
+		return node.Parent
+	}
+}
 func ScanFencedCodeBlock(line string, node *Node) *Node {
 	if !node.FencedMeta.Started {
 		info, ok := strings.CutPrefix(line, "```")
