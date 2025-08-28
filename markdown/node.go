@@ -46,28 +46,8 @@ func ScanBlocks(line string, node *Node) *Node {
 	if len(line) == 0 {
 		return node
 	}
-	if strings.HasPrefix(line, "# ") {
-		heading := node.AddChild(NewNode(TokenHeader1, ScanH1))
-		return heading.Scanner(line, heading)
-	}
-	if strings.HasPrefix(line, "## ") {
-		heading := node.AddChild(NewNode(TokenHeader2, ScanH2))
-		return heading.Scanner(line, heading)
-	}
-	if strings.HasPrefix(line, "### ") {
-		heading := node.AddChild(NewNode(TokenHeader2, ScanH3))
-		return heading.Scanner(line, heading)
-	}
-	if strings.HasPrefix(line, "#### ") {
-		heading := node.AddChild(NewNode(TokenHeader2, ScanH4))
-		return heading.Scanner(line, heading)
-	}
-	if strings.HasPrefix(line, "##### ") {
-		heading := node.AddChild(NewNode(TokenHeader2, ScanH5))
-		return heading.Scanner(line, heading)
-	}
-	if strings.HasPrefix(line, "###### ") {
-		heading := node.AddChild(NewNode(TokenHeader2, ScanH6))
+	if scanner, token := ScanHeader(line); scanner != nil {
+		heading := node.AddChild(NewNode(token, scanner))
 		return heading.Scanner(line, heading)
 	}
 	if strings.HasPrefix(line, "> ") {
@@ -90,30 +70,24 @@ func ScanBlocks(line string, node *Node) *Node {
 	paragraph := node.AddChild(NewNode(TokenParagraph, ScanParagraph))
 	return paragraph.Scanner(line, paragraph)
 }
-
-func ScanH1(line string, node *Node) *Node {
-	node.Text, _ = strings.CutPrefix(line, "# ")
-	return node.Parent
-}
-func ScanH2(line string, node *Node) *Node {
-	node.Text, _ = strings.CutPrefix(line, "## ")
-	return node.Parent
-}
-func ScanH3(line string, node *Node) *Node {
-	node.Text, _ = strings.CutPrefix(line, "### ")
-	return node.Parent
-}
-func ScanH4(line string, node *Node) *Node {
-	node.Text, _ = strings.CutPrefix(line, "#### ")
-	return node.Parent
-}
-func ScanH5(line string, node *Node) *Node {
-	node.Text, _ = strings.CutPrefix(line, "##### ")
-	return node.Parent
-}
-func ScanH6(line string, node *Node) *Node {
-	node.Text, _ = strings.CutPrefix(line, "###### ")
-	return node.Parent
+func ScanHeader(line string) (Scanner, Token) {
+	prefix2Header := map[string]Token{
+		"# ":      TokenHeader1,
+		"## ":     TokenHeader2,
+		"### ":    TokenHeader3,
+		"#### ":   TokenHeader4,
+		"##### ":  TokenHeader5,
+		"###### ": TokenHeader6,
+	}
+	for prefix, token := range prefix2Header {
+		if strings.HasPrefix(line, prefix) {
+			return func(line string, node *Node) *Node {
+				node.Text, _ = strings.CutPrefix(line, prefix)
+				return node.Parent
+			}, token
+		}
+	}
+	return nil, TokenNone
 }
 func ScanBlockQuote(line string, node *Node) *Node {
 	if len(line) == 0 {
