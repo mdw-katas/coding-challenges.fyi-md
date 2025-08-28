@@ -17,7 +17,7 @@ const (
 	TokenListItem
 	TokenBlockQuote
 	TokenPreCode
-	TokenParagraph // TODO: parse inlines
+	TokenParagraph // TODO: parse inlines (<h*>, <li>, <blockquote>)
 	TokenHTML      // TODO
 	TokenStrong    // TODO: parse
 	TokenEmphasis  // TODO: parse
