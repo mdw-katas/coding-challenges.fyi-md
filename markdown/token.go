@@ -16,13 +16,13 @@ const (
 	TokenUnorderedList
 	TokenListItem
 	TokenBlockQuote
-	TokenParagraph
 	TokenPreCode
-	TokenHTML
-	TokenStrong
-	TokenEmphasis
-	TokenImage
-	TokenLink
+	TokenParagraph // TODO: parse inlines
+	TokenHTML      // TODO
+	TokenStrong    // TODO: parse
+	TokenEmphasis  // TODO: parse
+	TokenImage     // TODO: parse
+	TokenLink      // TODO: parse
 )
 
 func (t Token) String() string {
