@@ -21,6 +21,7 @@ func Test(t *testing.T) {
 	}
 	parser.Finalize()
 	parser.root.Render(printing.NewPrinter(t.Output()), 0)
+	RenderHTML(t.Output(), parser.root)
 }
 
 func (this *Node) Render(printer printing.Printer, level int) {
