@@ -21,12 +21,6 @@ func IsOnly(text string, char rune) bool {
 	return count > 0 && count == len(text)
 }
 
-func TrimIndent(line string) string {
-	for len(line) > 0 && unicode.IsSpace(rune(line[0])) {
-		line = line[1:]
-	}
-	return line
-}
 func CutIndent(line string) (indent, content string, ok bool) {
 	x := 0
 	for ; x < len(line); x++ {
